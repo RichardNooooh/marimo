@@ -880,6 +880,18 @@ def test_chat_with_code(
     client: TestClient, mock_stream_completion: Any
 ) -> None:
     user_config_manager = get_session_config_manager(client)
+    messages = _create_messages("Help me create a dataframe")
+    messages[0]["parts"].insert(
+        0,
+        {
+            "type": "data-marimo-notebook",
+            "data": {
+                "sessionId": SESSION_ID,
+                "cellIds": ["a"],
+                "cells": [{"id": "a", "code": "import pandas as pd"}],
+            },
+        },
+    )
 
     # Create a mock StreamingResponse
     from starlette.responses import StreamingResponse
@@ -900,11 +912,9 @@ def test_chat_with_code(
             "/api/ai/chat",
             headers=HEADERS,
             json={
-                "messages": _create_messages("Help me create a dataframe"),
-                "uiMessages": _create_messages("Help me create a dataframe"),
+                "uiMessages": messages,
                 "model": "gpt-4-turbo",
                 "variables": [],
-                "includeOtherCode": "import pandas as pd",
                 "context": {},
                 "id": "123",
             },
@@ -912,6 +922,10 @@ def test_chat_with_code(
         assert response.status_code == 200, response.text
         # Verify stream_completion was called
         mock_stream_completion.assert_called_once()
+        kwargs = mock_stream_completion.call_args.kwargs
+        assert kwargs["messages"] == messages
+        assert "import pandas as pd" not in kwargs["system_prompt"]
+        assert SESSION_ID not in kwargs["system_prompt"]
         assert (
             mock_stream_completion.call_args.kwargs["enable_capabilities"]
             is False

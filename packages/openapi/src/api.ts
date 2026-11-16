@@ -284,6 +284,45 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/ai/models/{provider_name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List models for a supported provider without modifying configuration. */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Provider identifier, such as `openrouter` or a custom-provider name. */
+          provider_name: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Available models for the provider. */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ProviderModelsResponse"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/cache/clear": {
     parameters: {
       query?: never;
@@ -2137,43 +2176,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/kernel/interrupt": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header: {
-          "Marimo-Session-Id": string;
-        };
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Interrupt the kernel's execution */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["SuccessResponse"];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/api/kernel/pdb/breakpoints": {
     parameters: {
       query?: never;
@@ -2369,47 +2371,6 @@ export interface paths {
       requestBody?: never;
       responses: {
         /** @description Restart the current session without affecting other sessions. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["SuccessResponse"];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/kernel/run": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header: {
-          "Marimo-Session-Id": string;
-        };
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          "application/json": components["schemas"]["ExecuteCellsRequest"];
-        };
-      };
-      responses: {
-        /** @description Run a cell. Updates cell code in the kernel if needed; registers new cells for unseen cell IDs. Only allowed in edit mode. */
         200: {
           headers: {
             [name: string]: unknown;
@@ -2740,47 +2701,6 @@ export interface paths {
     };
     put?: never;
     post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/kernel/stdin": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header: {
-          "Marimo-Session-Id": string;
-        };
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          "application/json": components["schemas"]["StdinRequest"];
-        };
-      };
-      responses: {
-        /** @description Send input to the stdin stream */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["SuccessResponse"];
-          };
-        };
-      };
-    };
     delete?: never;
     options?: never;
     head?: never;
@@ -4190,7 +4110,6 @@ export interface components {
     ChatRequest: {
       /** @default null */
       id?: string | null;
-      includeOtherCode: string;
       /** @default null */
       model?: string | null;
       options?: components["schemas"]["ChatOptions"];
@@ -4303,13 +4222,11 @@ export interface components {
        * @description Deprecated completion API endpoint. Use an AI provider configuration instead.
        */
       base_url?: string | null;
-      /** @description the Codeium API key */
-      codeium_api_key?: string | null;
       /**
-       * @description one of `"github"`, `"codeium"`, or `"custom"`
+       * @description one of `"github"` or `"custom"`
        * @default false
        */
-      copilot: boolean | ("codeium" | "custom" | "github");
+      copilot: boolean | ("custom" | "github");
       /**
        * @deprecated
        * @description Deprecated completion model. Use ai.models.autocomplete_model instead.
@@ -4945,13 +4862,6 @@ export interface components {
       timestamp?: number;
       /** @enum {unknown} */
       type: "execute-cells";
-    };
-    /** ExecuteCellsRequest */
-    ExecuteCellsRequest: {
-      cellIds: components["schemas"]["CellId"][];
-      codes: string[];
-      /** @default null */
-      request?: components["schemas"]["HTTPRequest"] | null;
     };
     /**
      * ExecuteScratchpadCommand
@@ -6383,7 +6293,6 @@ export interface components {
       | components["schemas"]["ModelLifecycleNotification"]
       | components["schemas"]["RemoveUIElementsNotification"]
       | components["schemas"]["ReloadNotification"]
-      | components["schemas"]["ReconnectedNotification"]
       | components["schemas"]["InterruptedNotification"]
       | components["schemas"]["CompletedRunNotification"]
       | components["schemas"]["KernelReadyNotification"]
@@ -6609,6 +6518,15 @@ export interface components {
       schemaPath?: string[];
       tableName: string;
     };
+    /** ProviderModel */
+    ProviderModel: {
+      id: string;
+      name: string;
+    };
+    /** ProviderModelsResponse */
+    ProviderModelsResponse: {
+      models: components["schemas"]["ProviderModel"][];
+    };
     /**
      * PyreflyLanguageServerConfig
      * @description Configuration options for Pyrefly Language Server.
@@ -6719,14 +6637,6 @@ export interface components {
     /** RecentFilesResponse */
     RecentFilesResponse: {
       files: components["schemas"]["MarimoFile"][];
-    };
-    /**
-     * ReconnectedNotification
-     * @description WebSocket reconnection confirmed.
-     */
-    ReconnectedNotification: {
-      /** @enum {unknown} */
-      op: "reconnected";
     };
     /**
      * ReloadNotification
@@ -7326,10 +7236,6 @@ export interface components {
       op: "startup-progress";
       /** @enum {unknown} */
       phase: "preparing-environment" | "starting-kernel";
-    };
-    /** StdinRequest */
-    StdinRequest: {
-      text: string;
     };
     /**
      * StorageDownloadReadyNotification

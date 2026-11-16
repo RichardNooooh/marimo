@@ -116,7 +116,6 @@ export type ShutdownSessionRequest = schemas["ShutdownSessionRequest"];
 export type Snippet = schemas["Snippet"];
 export type SnippetSection = schemas["SnippetSection"];
 export type Snippets = schemas["Snippets"];
-export type StdinRequest = schemas["StdinRequest"];
 export type SuccessResponse = schemas["SuccessResponse"];
 export type UpdateUIElementValuesRequest =
   schemas["UpdateUIElementValuesRequest"];
@@ -163,9 +162,7 @@ export interface EditRequests {
    */
   saveLayout: (request: SaveLayoutRequest) => Promise<null>;
   sendCopy: (request: CopyNotebookRequest) => Promise<null>;
-  sendStdin: (request: StdinRequest) => Promise<null>;
   sendRunScratchpad: (request: ExecuteScratchpadRequest) => Promise<null>;
-  sendInterrupt: () => Promise<null>;
   sendShutdown: () => Promise<null>;
   sendFormat: (request: FormatCellsRequest) => Promise<FormatResponse>;
   sendCodeCompletionRequest: (request: CodeCompletionRequest) => Promise<null>;

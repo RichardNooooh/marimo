@@ -94,7 +94,9 @@ import {
   useFileState,
   useMessageQueue,
 } from "./chat-utils";
-import { getCodes } from "@/core/codemirror/copilot/getCodes";
+import { notebookCellCodes } from "@/core/codemirror/copilot/getCodes";
+import { getSessionId } from "@/core/kernel/session";
+import { withNotebookContext } from "./notebook-context";
 import { focusInputAndMoveToEnd } from "@/core/codemirror/utils";
 import ScrollToBottomButton from "./acp/scroll-to-bottom-button";
 import { useChatControllerId } from "./use-chat-controller-id";
@@ -489,7 +491,6 @@ const ChatPanelBody = () => {
           const completionBody = {
             model: modelConfig.current.id,
             uiMessages: options.messages,
-            includeOtherCode: getCodes(""),
             options: getEffectiveChatOptions(
               storedOptions,
               modelConfig.reasoningOptions,
@@ -579,10 +580,21 @@ const ChatPanelBody = () => {
     },
   });
 
+  const contextualize = useEvent(
+    (parts: ChatMessagePart[], history: UIMessage[]) =>
+      withNotebookContext(parts, history, {
+        sessionId: getSessionId(),
+        cells:
+          store.get(aiAtom)?.mode === "code_mode"
+            ? undefined
+            : store.get(notebookCellCodes),
+      }),
+  );
+
   const sendUserMessage = useEvent((parts: ChatMessagePart[]) => {
     clearAbortState();
     turn.start();
-    sendMessage({ role: "user", parts });
+    sendMessage({ role: "user", parts: contextualize(parts, messages) });
   });
 
   const tryFlushQueuedMessages = useEvent(
@@ -744,12 +756,15 @@ const ChatPanelBody = () => {
       turn.start();
       sendMessage({
         role: "user",
-        parts: [
-          { type: "text" as const, text: initialMessage },
-          ...(contextPart ? [contextPart] : []),
-          ...(fileParts ?? []),
-          ...attachments,
-        ],
+        parts: contextualize(
+          [
+            { type: "text" as const, text: initialMessage },
+            ...(contextPart ? [contextPart] : []),
+            ...(fileParts ?? []),
+            ...attachments,
+          ],
+          [],
+        ),
       });
       clearFiles();
       setInput("");
@@ -803,12 +818,15 @@ const ChatPanelBody = () => {
       sendMessage({
         messageId: messageId, // replace the message
         role: "user",
-        parts: [
-          { type: "text", text: newValue },
-          ...(contextPart ? [contextPart] : []),
-          ...userFileParts,
-          ...attachments,
-        ],
+        parts: contextualize(
+          [
+            { type: "text", text: newValue },
+            ...(contextPart ? [contextPart] : []),
+            ...userFileParts,
+            ...attachments,
+          ],
+          messages.slice(0, index),
+        ),
       });
     },
   );
